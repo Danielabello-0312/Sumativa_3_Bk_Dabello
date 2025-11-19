@@ -1,0 +1,147 @@
+{% extends "app_salas/base.html" %}
+
+{% block content %}
+<style>
+    body { background: #1a1a1a !important; color: white; }
+    .page-header { background: #000; padding: 30px 40px; margin: -20px -20px 30px -20px; border-bottom: 3px solid #e30613; display: flex; justify-content: space-between; align-items: center; }
+    .page-header h1 { color: #fff; font-size: 1.8rem; }
+    .btn-back { background: #e30613; padding: 10px 20px; border-radius: 5px; color: white; text-decoration: none; transition: 0.3s; }
+    .btn-back:hover { background: #b50510; }
+    .section-title { font-size: 1.5rem; margin: 30px 0 20px; color: #e30613; border-bottom: 2px solid #e30613; padding-bottom: 10px; }
+    .reserva-card { background: #2b2b2b; border-radius: 10px; padding: 20px; margin-bottom: 15px; border: 2px solid #3a3a3a; transition: 0.3s; }
+    .reserva-card:hover { border-color: #e30613; }
+    .reserva-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px; }
+    .sala-name { font-size: 1.3rem; font-weight: bold; color: #fff; }
+    .countdown { background: #e30613; padding: 8px 15px; border-radius: 5px; font-weight: bold; font-size: 1.1rem; }
+    .countdown.ending-soon { background: #ff6b00; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    .reserva-info { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; color: #999; }
+    .info-item { display: flex; align-items: center; gap: 8px; }
+    .info-label { color: #666; font-size: 0.9rem; }
+    .info-value { color: #fff; font-weight: bold; }
+    .status-badge { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; }
+    .status-active { background: #28a745; }
+    .status-finished { background: #6c757d; }
+    .empty-state { text-align: center; padding: 60px 20px; color: #666; }
+    .empty-state-icon { font-size: 4rem; margin-bottom: 20px; }
+    .btn-cancelar-reserva { background: #dc3545; border: none; color: white; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; margin-top: 10px; }
+    .btn-cancelar-reserva:hover { background: #c82333; transform: translateY(-2px); }
+</style>
+
+<div class="page-header">
+    <h1>📋 Mis Reservas</h1>
+    <a href="{% url 'inicio' %}" class="btn-back">← Volver al Inicio</a>
+</div>
+
+<div class="container">
+    <h2 class="section-title">🔴 Reservas Activas</h2>
+    
+    {% if reservas_activas %}
+        {% for reserva in reservas_activas %}
+        <div class="reserva-card" data-termino="{{ reserva.termino.isoformat }}">
+            <div class="reserva-header">
+                <div>
+                    <div class="sala-name">🏢 {{ reserva.sala.nombre }}</div>
+                    <span class="status-badge status-active">En uso</span>
+                </div>
+                <div class="countdown">Calculando...</div>
+            </div>
+            
+            <div class="reserva-info">
+                <div class="info-item">
+                    <span class="info-label">👤 RUT:</span>
+                    <span class="info-value">{{ reserva.rut }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">🕐 Inicio:</span>
+                    <span class="info-value">{{ reserva.inicio|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">🕕 Término:</span>
+                    <span class="info-value">{{ reserva.termino|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">👥 Capacidad:</span>
+                    <span class="info-value">{{ reserva.sala.capacidad_maxima }} personas</span>
+                </div>
+            </div>
+            <form method="POST" action="{% url 'cancelar_reserva' reserva.id %}" style="margin-top: 15px;">
+                {% csrf_token %}
+                <button type="submit" class="btn-cancelar-reserva" onclick="return confirm('¿Estás seguro de cancelar esta reserva?')">🗑️ Cancelar Reserva</button>
+            </form>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <h3>No tienes reservas activas</h3>
+            <p>Reserva una sala para comenzar</p>
+        </div>
+    {% endif %}
+
+    <h2 class="section-title">📚 Historial de Reservas</h2>
+    
+    {% if reservas_pasadas %}
+        {% for reserva in reservas_pasadas %}
+        <div class="reserva-card">
+            <div class="reserva-header">
+                <div>
+                    <div class="sala-name">🏢 {{ reserva.sala.nombre }}</div>
+                    <span class="status-badge status-finished">Finalizada</span>
+                </div>
+            </div>
+            
+            <div class="reserva-info">
+                <div class="info-item">
+                    <span class="info-label">👤 RUT:</span>
+                    <span class="info-value">{{ reserva.rut }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">🕐 Inicio:</span>
+                    <span class="info-value">{{ reserva.inicio|date:"d/m/Y H:i" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">🕕 Término:</span>
+                    <span class="info-value">{{ reserva.termino|date:"d/m/Y H:i" }}</span>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <h3>No tienes reservas anteriores</h3>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+function updateCountdowns() {
+    const now = new Date();
+    document.querySelectorAll('.reserva-card[data-termino]').forEach(card => {
+        const termino = new Date(card.getAttribute('data-termino'));
+        const countdown = card.querySelector('.countdown');
+        if (!countdown) return;
+        
+        const diff = termino - now;
+        if (diff <= 0) {
+            countdown.textContent = 'Finalizada';
+            countdown.classList.remove('ending-soon');
+            return;
+        }
+        
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        
+        countdown.textContent = `${h}h ${m}m ${s}s`;
+        
+        if (diff < 1800000) countdown.classList.add('ending-soon');
+        else countdown.classList.remove('ending-soon');
+    });
+}
+
+updateCountdowns();
+setInterval(updateCountdowns, 1000);
+</script>
+{% endblock %}

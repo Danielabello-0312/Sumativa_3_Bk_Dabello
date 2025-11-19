@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Lista de Salas - INACAP</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #1a1a1a;
+            color: #eee;
+            font-family: Arial, sans-serif;
+        }
+
+        .page-header {
+            background: #000;
+            padding: 30px 40px;
+            border-bottom: 3px solid #e30613;
+        }
+
+        .page-header h1 {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            color: #999;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .table-container {
+            background-color: #2b2b2b;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid #3a3a3a;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background-color: #e30613;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #3a3a3a;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background-color: #333;
+        }
+
+        .disponible {
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .ocupada {
+            color: #e30613;
+            font-weight: bold;
+        }
+
+        .btn-reservar {
+            padding: 8px 18px;
+            background-color: #e30613;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            display: inline-block;
+        }
+
+        .btn-reservar:hover {
+            background-color: #b50510;
+        }
+
+        .btn-reservar:disabled {
+            background-color: #555;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        .btn-volver {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 12px 25px;
+            background-color: #2b2b2b;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            border: 2px solid #3a3a3a;
+            transition: 0.3s;
+        }
+
+        .btn-volver:hover {
+            border-color: #e30613;
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <h1>Lista de Salas</h1>
+    <p>Consulta el estado y disponibilidad de todas las salas</p>
+</div>
+
+<div class="container">
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nombre de Sala</th>
+                    <th>Capacidad</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sala in salas %}
+                <tr>
+                    <td><strong>{{ sala.nombre }}</strong></td>
+                    <td>{{ sala.capacidad_maxima }} personas</td>
+                    <td>
+                        {% if sala.disponible %}
+                            <span class="disponible">● Disponible</span>
+                        {% else %}
+                            <span class="ocupada">● Ocupada</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if sala.disponible %}
+                            <a href="{% url 'reservar' sala.id %}" class="btn-reservar">Reservar</a>
+                        {% else %}
+                            <button class="btn-reservar" disabled>No Disponible</button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 40px; color: #999;">
+                        No hay salas registradas en el sistema
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <a href="{% url 'inicio' %}" class="btn-volver">← Volver al Inicio</a>
+</div>
+
+</body>
+</html>

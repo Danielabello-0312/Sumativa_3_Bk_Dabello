@@ -1,0 +1,127 @@
+{% extends "app_salas/base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+
+<style>
+    .page-header { background: #000; padding: 30px 40px; margin: -20px -20px 30px -20px; border-bottom: 3px solid #e30613; }
+    .page-header h1 { color: #fff; margin-bottom: 10px; }
+    .container { max-width: 700px; margin: 0 auto; padding: 20px; }
+    .info-sala { background-color: #2b2b2b; padding: 20px; border-radius: 12px; margin-bottom: 30px; border: 2px solid #3a3a3a; }
+    .info-sala h3 { color: #e30613; margin-bottom: 15px; }
+    .info-sala p { margin: 8px 0; color: #ccc; }
+    .formulario { background-color: #2b2b2b; padding: 40px; border-radius: 12px; border: 2px solid #3a3a3a; }
+    .form-group { margin-bottom: 25px; }
+    label { display: block; margin-bottom: 10px; color: #fff; font-weight: 600; }
+    .form-input { width: 100%; padding: 14px; background-color: #1a1a1a; border: 2px solid #3a3a3a; border-radius: 8px; color: #fff; font-size: 1rem; }
+    .form-input:focus { outline: none; border-color: #e30613; }
+    .horas-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; margin-top: 10px; }
+    .hora-btn { padding: 14px; background: #1a1a1a; border: 2px solid #3a3a3a; border-radius: 8px; color: #ccc; cursor: pointer; text-align: center; transition: 0.3s; }
+    .hora-btn:hover { border-color: #e30613; background: #2b2b2b; }
+    .hora-btn.selected { background: #e30613; border-color: #e30613; color: white; font-weight: bold; }
+    .botones { display: flex; gap: 15px; margin-top: 30px; }
+    .btn { flex: 1; padding: 16px; border: none; border-radius: 10px; cursor: pointer; text-align: center; font-weight: bold; font-size: 1.05rem; text-decoration: none; transition: 0.3s; }
+    .btn-confirmar { background-color: #e30613; color: #fff; }
+    .btn-confirmar:hover:not(:disabled) { background-color: #b50510; }
+    .btn-confirmar:disabled { background-color: #555; opacity: 0.5; }
+    .btn-cancelar { background-color: #555; color: #fff; }
+    .resumen { background: #1a1a1a; padding: 20px; border-radius: 10px; margin: 20px 0; border: 2px solid #3a3a3a; }
+    .resumen-item { display: flex; justify-content: space-between; margin: 10px 0; color: #ccc; }
+    .resumen-item strong { color: #fff; }
+</style>
+
+<div class="page-header">
+    <h1>📅 Reservar Sala</h1>
+</div>
+
+<div class="container">
+    <div class="info-sala">
+        <h3>{{ sala.nombre }}</h3>
+        <p>📊 <strong>Capacidad:</strong> {{ sala.capacidad_maxima }} personas</p>
+        <p>📍 <strong>Estado:</strong> <span style="color: #4caf50;">● Disponible</span></p>
+    </div>
+
+    <div class="formulario">
+        <form method="POST" id="formReserva">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label>📅 Fecha de Reserva</label>
+                <input type="text" id="fechaPicker" name="fecha" class="form-input" placeholder="Selecciona una fecha" required>
+            </div>
+
+            <div class="form-group">
+                <label>🕐 Hora de Inicio</label>
+                <div class="horas-grid" id="horasGrid"></div>
+                <input type="hidden" name="hora_inicio" id="horaInput" required>
+            </div>
+
+            <div class="form-group">
+                <label>👤 RUT</label>
+                {{ form.rut }}
+            </div>
+
+            <div class="form-group">
+                <label>⏱️ Duración</label>
+                <select name="duracion_horas" class="form-input">
+                    <option value="1">1 hora</option>
+                    <option value="2" selected>2 horas</option>
+                    <option value="3">3 horas</option>
+                    <option value="4">4 horas</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>👥 Cantidad de Personas</label>
+                <input type="number" name="cantidad_personas" class="form-input" min="1" max="{{ sala.capacidad_maxima }}" value="1" required>
+            </div>
+
+            <div class="resumen" id="resumen" style="display: none;">
+                <div style="color: #e30613; font-weight: bold; margin-bottom: 10px;">📋 Resumen</div>
+                <div class="resumen-item"><span>Fecha:</span><strong id="rFecha">-</strong></div>
+                <div class="resumen-item"><span>Hora:</span><strong id="rHora">-</strong></div>
+            </div>
+
+            <div class="botones">
+                <button type="submit" class="btn btn-confirmar" id="btnConfirmar" disabled>Confirmar</button>
+                <a href="{% url 'seleccionar_sala' %}" class="btn btn-cancelar">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+flatpickr("#fechaPicker", {
+    locale: "es",
+    minDate: "today",
+    dateFormat: "Y-m-d",
+    disableMobile: true,
+    onChange: function(selectedDates, dateStr) {
+        document.getElementById('rFecha').textContent = new Date(dateStr).toLocaleDateString('es-CL');
+        document.getElementById('resumen').style.display = 'block';
+        generarHoras();
+    }
+});
+
+function generarHoras() {
+    const grid = document.getElementById('horasGrid');
+    grid.innerHTML = '';
+    for (let h = 8; h <= 20; h++) {
+        const hora = `${h.toString().padStart(2, '0')}:00`;
+        const div = document.createElement('div');
+        div.className = 'hora-btn';
+        div.textContent = hora;
+        div.onclick = () => {
+            document.querySelectorAll('.hora-btn').forEach(b => b.classList.remove('selected'));
+            div.classList.add('selected');
+            document.getElementById('horaInput').value = hora;
+            document.getElementById('rHora').textContent = hora;
+            document.getElementById('btnConfirmar').disabled = false;
+        };
+        grid.appendChild(div);
+    }
+}
+</script>
+{% endblock %}
