@@ -62,11 +62,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.oracle',
         'NAME': 'localhost/XEPDB1',
-        'USER': 'developer',
-        'PASSWORD': 'Dani2712',
+        'USER': 'usuario_seguro',
+        'PASSWORD': 'contraseña_segura_nueva',
     }
 }
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
